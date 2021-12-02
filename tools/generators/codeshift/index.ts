@@ -1,10 +1,18 @@
-import { Tree, formatFiles, installPackagesTask } from '@nrwl/devkit';
-import { libraryGenerator } from '@nrwl/workspace/generators';
+import { formatFiles, Tree } from '@nrwl/devkit';
+import { applyTransform } from 'jscodeshift/src/testUtils';
+import arrowFunctionsTransform from './arrow-functions';
 
 export default async function (tree: Tree, schema: any) {
-  await libraryGenerator(tree, { name: schema.name });
+  const path = 'packages/app/src/app/app.ts';
+  const input = tree.read(path).toString();
+  const transformOptions = {};
+  const output = applyTransform(
+    { default: arrowFunctionsTransform, parser: 'ts' },
+    transformOptions,
+    { source: input }
+  );
+  tree.write(path, output);
+
   await formatFiles(tree);
-  return () => {
-    installPackagesTask(tree);
-  };
+  return () => {};
 }
